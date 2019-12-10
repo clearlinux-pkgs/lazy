@@ -4,12 +4,13 @@
 #
 Name     : lazy
 Version  : 1.4
-Release  : 4
+Release  : 5
 URL      : https://files.pythonhosted.org/packages/ce/10/2c0cd8a601fff792f814b89233859e3fce2e266a5defd8af3bcadbe5c7ef/lazy-1.4.zip
 Source0  : https://files.pythonhosted.org/packages/ce/10/2c0cd8a601fff792f814b89233859e3fce2e266a5defd8af3bcadbe5c7ef/lazy-1.4.zip
 Summary  : Lazy attributes for Python objects
 Group    : Development/Tools
 License  : BSD-2-Clause
+Requires: lazy-license = %{version}-%{release}
 Requires: lazy-python = %{version}-%{release}
 Requires: lazy-python3 = %{version}-%{release}
 BuildRequires : buildreq-distutils3
@@ -20,12 +21,41 @@ BuildRequires : tox
 BuildRequires : virtualenv
 
 %description
-====
 lazy
-====
-----------------------------------
-Lazy attributes for Python objects
-----------------------------------
+        ====
+        ----------------------------------
+        Lazy attributes for Python objects
+        ----------------------------------
+        
+        Package Contents
+        ================
+        
+        @lazy
+            A decorator to create lazy attributes.
+        
+        Overview
+        ========
+        
+        *Lazy attributes* are computed attributes that are evaluated only
+        once, the first time they are used.  Subsequent uses return the
+        results of the first call. They come handy when code should run
+        
+        - *late*, i.e. just before it is needed, and
+        - *once*, i.e. not twice, in the lifetime of an object.
+        
+        You can think of it as *deferred initialization*.
+        The possibilities are endless.
+        
+        Examples
+        ========
+
+%package license
+Summary: license components for the lazy package.
+Group: Default
+
+%description license
+license components for the lazy package.
+
 
 %package python
 Summary: python components for the lazy package.
@@ -47,13 +77,22 @@ python3 components for the lazy package.
 
 %prep
 %setup -q -n lazy-1.4
+cd %{_builddir}/lazy-1.4
 
 %build
 export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
-export LANG=C
-export SOURCE_DATE_EPOCH=1550504263
+export LANG=C.UTF-8
+export SOURCE_DATE_EPOCH=1576011508
+export GCC_IGNORE_WERROR=1
+export AR=gcc-ar
+export RANLIB=gcc-ranlib
+export NM=gcc-nm
+export CFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 "
+export FCFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 "
+export FFLAGS="$CFLAGS -O3 -ffat-lto-objects -flto=4 "
+export CXXFLAGS="$CXXFLAGS -O3 -ffat-lto-objects -flto=4 "
 export MAKEFLAGS=%{?_smp_mflags}
 python3 setup.py build
 
@@ -61,9 +100,12 @@ python3 setup.py build
 export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
-PYTHONPATH=%{buildroot}/usr/lib/python3.7/site-packages python3 setup.py test
+PYTHONPATH=%{buildroot}$(python -c "import sys; print(sys.path[-1])") python setup.py test
 %install
+export MAKEFLAGS=%{?_smp_mflags}
 rm -rf %{buildroot}
+mkdir -p %{buildroot}/usr/share/package-licenses/lazy
+cp %{_builddir}/lazy-1.4/LICENSE %{buildroot}/usr/share/package-licenses/lazy/995257b8602a70cb044732f9bcbdafe1952d0fd6
 python3 -tt setup.py build  install --root=%{buildroot}
 echo ----[ mark ]----
 cat %{buildroot}/usr/lib/python3*/site-packages/*/requires.txt || :
@@ -71,6 +113,10 @@ echo ----[ mark ]----
 
 %files
 %defattr(-,root,root,-)
+
+%files license
+%defattr(0644,root,root,0755)
+/usr/share/package-licenses/lazy/995257b8602a70cb044732f9bcbdafe1952d0fd6
 
 %files python
 %defattr(-,root,root,-)

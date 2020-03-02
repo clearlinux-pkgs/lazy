@@ -4,7 +4,7 @@
 #
 Name     : lazy
 Version  : 1.4
-Release  : 6
+Release  : 7
 URL      : https://files.pythonhosted.org/packages/ce/10/2c0cd8a601fff792f814b89233859e3fce2e266a5defd8af3bcadbe5c7ef/lazy-1.4.zip
 Source0  : https://files.pythonhosted.org/packages/ce/10/2c0cd8a601fff792f814b89233859e3fce2e266a5defd8af3bcadbe5c7ef/lazy-1.4.zip
 Summary  : Lazy attributes for Python objects
@@ -21,33 +21,120 @@ BuildRequires : tox
 BuildRequires : virtualenv
 
 %description
+====
 lazy
-        ====
-        ----------------------------------
-        Lazy attributes for Python objects
-        ----------------------------------
-        
-        Package Contents
-        ================
-        
+====
+----------------------------------
+Lazy attributes for Python objects
+----------------------------------
+
+Package Contents
+================
+
+@lazy
+    A decorator to create lazy attributes.
+
+Overview
+========
+
+*Lazy attributes* are computed attributes that are evaluated only
+once, the first time they are used.  Subsequent uses return the
+results of the first call. They come handy when code should run
+
+- *late*, i.e. just before it is needed, and
+- *once*, i.e. not twice, in the lifetime of an object.
+
+You can think of it as *deferred initialization*.
+The possibilities are endless.
+
+Examples
+========
+
+The class below creates its ``store`` resource lazily::
+
+    from lazy import lazy
+
+    class FileUploadTmpStore(object):
+
         @lazy
-            A decorator to create lazy attributes.
-        
-        Overview
-        ========
-        
-        *Lazy attributes* are computed attributes that are evaluated only
-        once, the first time they are used.  Subsequent uses return the
-        results of the first call. They come handy when code should run
-        
-        - *late*, i.e. just before it is needed, and
-        - *once*, i.e. not twice, in the lifetime of an object.
-        
-        You can think of it as *deferred initialization*.
-        The possibilities are endless.
-        
-        Examples
-        ========
+        def store(self):
+            location = settings.get('fs.filestore')
+            return FileSystemStore(location)
+
+        def put(self, uid, fp):
+            self.store.put(uid, fp)
+            fp.seek(0)
+
+        def get(self, uid, default=None):
+            return self.store.get(uid, default)
+
+Another application area is caching::
+
+    class PersonView(View):
+
+        @lazy
+        def person_id(self):
+            return self.request.get('person_id', -1)
+
+        @lazy
+        def person_data(self):
+            return self.session.query(Person).get(self.person_id)
+
+Documentation
+=============
+
+For further details please refer to the `API Documentation`_.
+
+.. _`API Documentation`: https://lazy.readthedocs.io/en/stable/
+
+Credits
+=======
+
+I first encountered this type of descriptor in the
+``zope.cachedescriptors`` package, which is part of the
+`Zope Toolkit`_.
+
+.. _`Zope Toolkit`: https://zopetoolkit.readthedocs.io
+
+
+Changelog
+=========
+
+1.4 - 2019-01-28
+----------------
+
+- Add MANIFEST.in.
+  [stefan]
+
+- Release as universal wheel.
+  [stefan]
+
+1.3 - 2017-02-05
+----------------
+
+- Support Python 2.6-3.6 without 2to3.
+  [stefan]
+
+- Add a LICENSE file.
+  [stefan]
+
+1.2 - 2014-04-19
+----------------
+
+- Remove setuptools from install_requires because it isn't.
+  [stefan]
+
+1.1 - 2012-10-12
+----------------
+
+- Use ``functools.wraps()`` properly; the list of attributes changes with
+  every version of Python 3.
+  [stefan]
+
+1.0 - 2011-03-24
+----------------
+
+- Initial release.
 
 %package license
 Summary: license components for the lazy package.
@@ -70,6 +157,7 @@ python components for the lazy package.
 Summary: python3 components for the lazy package.
 Group: Default
 Requires: python3-core
+Provides: pypi(lazy)
 
 %description python3
 python3 components for the lazy package.
@@ -84,7 +172,8 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1576011508
+export SOURCE_DATE_EPOCH=1583165944
+# -Werror is for werrorists
 export GCC_IGNORE_WERROR=1
 export AR=gcc-ar
 export RANLIB=gcc-ranlib
